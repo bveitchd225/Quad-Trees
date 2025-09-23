@@ -40,6 +40,9 @@ public class Ball {
 
     public void collidesWith(Ball other) {
         double d = Math.sqrt(Math.pow(this.position.getX() - other.position.getX(),2) + Math.pow(this.position.getY() - other.position.getY(),2));
+        if (d == 0) {
+            this.velocity = new Vector2((int) (-max_random_velocity + Math.random()*(max_random_velocity - -max_random_velocity + 1)), (int) (-max_random_velocity + Math.random()*(max_random_velocity - -max_random_velocity + 1)));
+        }
         if (d < this.r + other.r) {
             // System.out.print(this.velocity);
             double thism = this.r*this.r*3.14;
@@ -81,6 +84,7 @@ public class Ball {
     }
 
     public void update(double dt) {
+        // System.out.println(dt);
         // this.y_vel += 60*9.81*dt;
         // this.velocity.setY(this.velocity.getY() + 60*9.81*dt);
 
