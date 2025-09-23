@@ -67,8 +67,10 @@ public class Vector2 {
 
     public void setMagnitude(double newMagnitude) {
         double currentMagnitude = this.getMagnitude();
-        this.x *= newMagnitude / currentMagnitude;
-        this.y *= newMagnitude / currentMagnitude;
+        if (currentMagnitude != 0) {
+            this.x *= newMagnitude / currentMagnitude;
+            this.y *= newMagnitude / currentMagnitude;
+        }
     }
 
     public String toString() {
