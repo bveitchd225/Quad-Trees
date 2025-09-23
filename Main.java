@@ -9,9 +9,12 @@ public class Main extends GBSGame {
 
     ArrayList<Ball> balls;
 
+    private double[] reportedFrameTimes = new double[100];
+    private int rollingIndex = 0;
+
     public Main() {
         balls = new ArrayList<>();
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 7500; i++) {
             balls.add( new Ball() );
         }
         // balls.add(new Ball(128, 256, 50, 100, 0));
@@ -21,15 +24,23 @@ public class Main extends GBSGame {
     @Override
     public void update(double dt) {
         double start = System.nanoTime();
-        for (Ball b: balls) {
-            for (Ball o: balls) {
-                if (b == o) {
-                    continue;
-                }
+        for (int i = 0; i < balls.size(); i++) {
+            Ball b = balls.get(i);
+            for (int j = i+1; j < balls.size(); j++) {
+                Ball o = balls.get(j);
                 b.collidesWith(o);
             }
         }
-        System.out.println((System.nanoTime() - start)/1000000);
+        reportedFrameTimes[rollingIndex] = (double) (System.nanoTime() - start)/1000000;
+        rollingIndex++;
+        if (rollingIndex > reportedFrameTimes.length-1) {
+            rollingIndex=0;
+            double sum = 0;
+            for (double n: reportedFrameTimes) {
+                sum += n;
+            }
+            System.out.println(sum / reportedFrameTimes.length);
+        }
         for (Ball b: balls) {
             b.update(dt);
         }
@@ -62,7 +73,7 @@ public class Main extends GBSGame {
     public static void main(String[] args) {
         Main m = new Main();
         m.setResolution(SCREEN_WIDTH, SCREEN_HEIGHT);
-        m.setFrameRate(10);
+        m.setFrameRate(1200);
         m.createWindow();
     }
 }
