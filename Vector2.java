@@ -17,7 +17,7 @@ public class Vector2 {
     }
 
     public static Vector2 multiply(Vector2 a, double factor) {
-        return new Vector2(a.x*factor, a.y*factor);
+        return new Vector2(a.x * factor, a.y * factor);
     }
 
     public void add(Vector2 other) {
@@ -42,8 +42,6 @@ public class Vector2 {
     public double dot(Vector2 other) {
         return this.x * other.x + this.y * other.y;
     }
-
-
 
     public double getX() {
         return x;
