@@ -7,6 +7,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import javax.swing.JFrame;
@@ -18,7 +20,9 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     private JFrame f;
 
     private int FPS;
+    private int PPS = 60;
     private double maxFrameTime;
+    private double maxPhysicsTime = 1.0 / PPS;
     private int WIDTH;
     private int HEIGHT;
 
@@ -26,8 +30,8 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     private Graphics screen;
 
     private int lastReportedFrameRate = -1;
-    private int[] reportedFrameRates = new int[100];
-    private int rollingIndex = 0;
+    private RollingAverage drawAverage = new RollingAverage(100);
+    private RollingAverage physicsAverage = new RollingAverage(1000);
 
     private static ArrayList<String> keys = new ArrayList<>();
     private static ArrayList<String> keyEvents = new ArrayList<>();
@@ -47,12 +51,21 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
         maxFrameTime = 1000000000.0 / f;
     }
 
+    public void setPhysicsRate(int f) {
+        PPS = f;
+        maxPhysicsTime = 1000000000.0 / f;
+    }
+
     public int getActiveFrameRate() {
         return (int) Math.min(lastReportedFrameRate, 1/(maxFrameTime/1000000000));
     }
 
-    public double getAverageFrameTime() {
-        return 1000.0/lastReportedFrameRate;
+    public double getAverageDrawTime() {
+        return drawAverage.currentAverage();
+    }
+
+    public double getAveragePhysicsTime() {
+        return physicsAverage.currentAverage();
     }
 
     public void createWindow() {
@@ -69,6 +82,7 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
         f.addKeyListener(this);
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
+        this.addMouseWheelListener(this);
         f.setFocusable(true);
         startGameThread();
     }
@@ -83,78 +97,35 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     public void run() {
 
         double drawInterval = 1000000000/FPS;
-        double delta = 0;
+        double drawDelta = 0;
+
+        double physicsInterval = 1000000000/PPS;
+        double physicsDelta = 0;
+
         double lastTime = System.nanoTime();
         long currentTime = 0;
 
-        // double lastFrame = System.nanoTime();
-        double start = System.nanoTime();
-        double after = System.nanoTime();
-        double frameTime = 1000000000/FPS;
-
         while (gameThread != null) {
-            // currentTime = System.nanoTime();
+            currentTime = System.nanoTime();
 
-            // delta += (currentTime - lastTime) / drawInterval;
-            // lastTime = currentTime;
+            drawDelta += (currentTime - lastTime) / drawInterval;
+            physicsDelta += (currentTime - lastTime) / physicsInterval;
+            lastTime = currentTime;
 
-            // if (delta >= 1) {
-                
-            //     // reportedFrameRates[rollingIndex] = (int) (1.0 / ((System.nanoTime() - lastFrame)/1000000000));
-            //     // lastFrame = System.nanoTime();
-            //     // rollingIndex++;
-            //     // if (rollingIndex > reportedFrameRates.length-1) {
-            //     //     rollingIndex = 0;
-            //     //     int sum = 0;
-            //     //     for (int n: reportedFrameRates) {
-            //     //         sum += n;
-            //     //     }
-            //     //     lastReportedFrameRate = sum / reportedFrameRates.length;
-            //     // }
-            //     double start = System.nanoTime();
-            //     update(delta/FPS);
-            //     repaint();
-            //     System.out.println(System.nanoTime() - start);
-            //     delta=0; 
-            // }
-
-            double lastStart = start;
-            start = System.nanoTime();
-            update((start - lastStart)/1000000000);
-            draw(screen);
-            after = System.nanoTime();
-            repaint();
-            frameTime = after - start;
-            // System.out.println(frameTime/1000000);
-
-            reportedFrameRates[rollingIndex] = (int) (1.0 / (frameTime/1000000000));
-            
-        
-
-            if (frameTime < maxFrameTime) {
-                reportedFrameRates[rollingIndex] = (int) (1.0 / (frameTime/1000000000));
-                // wait until we're ready
-                try {
-                    // System.out.println("Waiting: " + (int) (maxFrameTime - frameTime));
-                    Thread.sleep((long) (maxFrameTime - frameTime)/1000000);
-                } catch (InterruptedException e) {
-                    
-                }
-            }
-            else {
-                reportedFrameRates[rollingIndex] = (int) (1.0 / (frameTime/1000000000));
+            if (physicsDelta >= 1) {
+                double start = System.nanoTime();
+                update(physicsDelta/PPS);
+                physicsAverage.addValue((System.nanoTime() - start)/1000000);
+                physicsDelta = 0;
             }
 
-            rollingIndex++;
-            if (rollingIndex > reportedFrameRates.length-1) {
-                rollingIndex = 0;
-                int sum = 0;
-                for (int n: reportedFrameRates) {
-                    sum += n;
-                }
-                lastReportedFrameRate = sum / reportedFrameRates.length;
+            if (drawDelta >= 1) {
+                double start = System.nanoTime();
+                draw(screen);
+                drawAverage.addValue((System.nanoTime() - start)/1000000);
+                repaint();
+                drawDelta=0;
             }
-            
         }
     }
 
