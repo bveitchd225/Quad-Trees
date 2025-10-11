@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
+public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
 
     private Thread gameThread;
     private JFrame f;
@@ -271,5 +271,11 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     public void mouseMoved(MouseEvent e) {
         lastReportedMouseX = e.getX();
         lastReportedMouseY = e.getY();
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        // TODO Auto-generated method stub
+        onMouseClick(e);
     }
 }
