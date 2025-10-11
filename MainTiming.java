@@ -1,14 +1,15 @@
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.util.ArrayList;
-
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
 
 public class MainTiming extends GBSGame {
 
-    public static final int SCREEN_WIDTH = 1024;
-    public static final int SCREEN_HEIGHT = 1024;
+    public static final int SCREEN_WIDTH = 512;
+    public static final int SCREEN_HEIGHT = 512;
 
     ArrayList<Particle> particles;
     QuadTree quadTree;
@@ -20,23 +21,44 @@ public class MainTiming extends GBSGame {
 
     boolean viewQuadTree;
 
-    // Max for 480 is 700
+    ArrayList<Particle> particlesToAdd;
+    int currentRadius;
 
+    // Max for 480 is 700
     public MainTiming() {
         particles = new ArrayList<>();
-        for (int i = 0; i < 2000; i++) {
-            particles.add(new Particle());
+        particlesToAdd = new ArrayList<>();
+        for (int i = 0; i < 1; i++) {
+            particles.add(new Particle(75));
         }
         viewQuadTree = false;
+        currentRadius = 75;
     }
 
     @Override
     public void update(double dt) {
+        if (particlesToAdd.size() > 0) {
+            for (int i = 0; i < particlesToAdd.size(); i++) {
+                particles.add(particlesToAdd.remove(i));
+            }
+        }
 
         if (GBSGame.keyPressed("q")) {
             viewQuadTree = !viewQuadTree;
         }
 
+        if (GBSGame.keyPressed("up")) {
+            currentRadius++;
+        }
+        if (GBSGame.keyPressed("down")) {
+            currentRadius++;
+        }
+
+        updateParticles(dt);
+
+    }
+
+    public void updateParticles(double dt) {
         // Update Particles
         double start = System.nanoTime();
         for (Particle b : particles) {
@@ -56,8 +78,42 @@ public class MainTiming extends GBSGame {
         start = System.nanoTime();
         for (int i = 0; i < particles.size(); i++) {
             Particle b = particles.get(i);
+            double searchRadius = b.getRadius()+b.getRadius();
             for (Particle o : quadTree.query(
-                    new Rectangle((int) b.getX(), (int) b.getY(), (int) b.getRadius() * 2, (int) b.getRadius() * 2))) {
+                    new Rectangle((int) (b.getX() - searchRadius), (int) (b.getY() - searchRadius), (int) (searchRadius * 2), (int) (searchRadius * 2)))) {
+                if (b == o) {
+                    continue;
+                }
+                b.collidesWith(o);
+            }
+        }
+
+        quadTreeCollisions.addValue(System.nanoTime() - start);
+    }
+
+    public void updateParticlesBad(double dt) {
+        // Update Particles
+        double start = System.nanoTime();
+        for (Particle b : particles) {
+            b.update(dt);
+        }
+        particlesUpdate.addValue(System.nanoTime() - start);
+
+        // Build Quad Tree
+        start = System.nanoTime();
+        // quadTree = new QuadTree(new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), 4);
+        // for (Particle b : particles) {
+        //     quadTree.add(b);
+        // }
+        quadTreeBuild.addValue(System.nanoTime() - start);
+
+        // Check Collisions
+        start = System.nanoTime();
+        for (int i = 0; i < particles.size(); i++) {
+            Particle b = particles.get(i);
+            // double searchRadius = b.getRadius() + Particle.max_radius;
+            for (int j = i+1; j < particles.size(); j++) {
+                Particle o = particles.get(j);
                 if (b == o) {
                     continue;
                 }
@@ -70,7 +126,23 @@ public class MainTiming extends GBSGame {
 
     @Override
     public void onMouseClick(MouseEvent e) {
-        particles.add(new Particle(e.getX(), e.getY(), 5, 0, 0));
+        // System.out.println(e.getButton());
+        if (e.getButton() == 1) {
+            particlesToAdd.add(new Particle(e.getX(), e.getY(), currentRadius, 0, 0));
+        }
+        if (e.getButton() == 0) {
+            MouseWheelEvent we = (MouseWheelEvent) e;
+            if (we.getPreciseWheelRotation() == -1) {
+                currentRadius++;
+            }
+            else {
+                currentRadius--;
+            }
+
+            // System.out.println(e);
+        }
+
+        
     }
 
     @Override
@@ -90,20 +162,32 @@ public class MainTiming extends GBSGame {
             quadTree.draw(g);
         }
         g.setColor(Color.BLACK);
-        g.fillRect(10, 10, 100, 16 * 6 + 4);
+        g.fillRect(10, 10, 100, 16 * 7 + 4);
         g.setColor(Color.WHITE);
         g.drawString("FPS: " + getActiveFrameRate(), 15, 25);
         g.drawString("update:   " + Math.round(particlesUpdate.currentAverage() / 1000) / 1000.0, 15, 25 + 16 * 1);
         g.drawString("QT Build: " + Math.round(quadTreeBuild.currentAverage() / 1000) / 1000.0, 15, 25 + 16 * 2);
         g.drawString("QT Query: " + Math.round(quadTreeCollisions.currentAverage() / 1000) / 1000.0, 15, 25 + 16 * 3);
-        g.drawString("draw:     " + Math.round(particlesDraw.currentAverage() / 1000) / 1000.0, 15, 25 + 16 * 4);
-        g.drawString("total:     " + Math.round(getAverageFrameTime() * 1000) / 1000.0, 15, 25 + 16 * 5);
+        g.drawString("update (G): " + Math.round(getAveragePhysicsTime() * 1000) / 1000.0, 15, 25 + 16 * 4);
+        g.drawString("draw:     " + Math.round(particlesDraw.currentAverage() / 1000) / 1000.0, 15, 25 + 16 * 5);
+        g.drawString("draw (G): " + Math.round(getAverageDrawTime() * 1000) / 1000.0, 15, 25 + 16 * 6);
+
+        g.setColor(Color.BLACK);
+        g.drawString("Current radius: " + currentRadius, SCREEN_WIDTH - 110, 30);
+
+        double sum = 0;
+        for (Particle p: particles) {
+            sum += 0.5 * p.getMass() * p.getSpeed() * p.getSpeed();
+        }
+
+        g.drawString("Current Energy: " + (int) sum, SCREEN_WIDTH - 110, 60);
     }
 
     public static void main(String[] args) {
         MainTiming m = new MainTiming();
         m.setResolution(SCREEN_WIDTH, SCREEN_HEIGHT);
-        m.setFrameRate(480);
+        m.setPhysicsRate(960);
+        m.setFrameRate(60);
         m.createWindow();
     }
 }
