@@ -215,16 +215,46 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (!keys.contains(e.getKeyChar() + "")) {
-            keyEvents.add(e.getKeyChar() + "");
+
+        String keyChar = e.getKeyChar() + "";
+        
+        if (e.getKeyCode() == 38) {
+            keyChar = "up";
         }
-        keys.add(e.getKeyChar() + "");
+        if (e.getKeyCode() == 40) {
+            keyChar = "down";
+        }
+        if (e.getKeyCode() == 37) {
+            keyChar = "left";
+        }
+        if (e.getKeyCode() == 39) {
+            keyChar = "right";
+        }
+
+        if (!keys.contains(keyChar + "")) {
+            keyEvents.add(keyChar + "");
+        }
+        keys.add(keyChar + "");
         
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         String key = e.getKeyChar() + "";
+        
+        if (e.getKeyCode() == 38) {
+            key = "up";
+        }
+        if (e.getKeyCode() == 40) {
+            key = "down";
+        }
+        if (e.getKeyCode() == 37) {
+            key = "left";
+        }
+        if (e.getKeyCode() == 39) {
+            key = "right";
+        }
+
         while (keys.contains(key)) {
             keys.remove(key);
         }
