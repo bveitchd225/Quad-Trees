@@ -10,11 +10,16 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
+public class GBSGame extends JPanel
+        implements Runnable, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
 
     private Thread gameThread;
     private JFrame f;
@@ -38,7 +43,7 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
 
     private static int lastReportedMouseX = -1;
     private static int lastReportedMouseY = -1;
-    
+
     public void setResolution(int w, int h) {
         WIDTH = w;
         HEIGHT = h;
@@ -57,7 +62,7 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     }
 
     public int getActiveFrameRate() {
-        return (int) Math.min(lastReportedFrameRate, 1/(maxFrameTime/1000000000));
+        return (int) Math.min(lastReportedFrameRate, 1 / (maxFrameTime / 1000000000));
     }
 
     public double getAverageDrawTime() {
@@ -75,7 +80,7 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
         f = new JFrame();
         f.add(this);
         f.setTitle("Game");
-        this.setPreferredSize(new Dimension(WIDTH,HEIGHT));
+        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         f.pack();
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setVisible(true);
@@ -96,10 +101,10 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     @Override
     public void run() {
 
-        double drawInterval = 1000000000/FPS;
+        double drawInterval = 1000000000 / FPS;
         double drawDelta = 0;
 
-        double physicsInterval = 1000000000/PPS;
+        double physicsInterval = 1000000000 / PPS;
         double physicsDelta = 0;
 
         double lastTime = System.nanoTime();
@@ -114,17 +119,17 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
 
             if (physicsDelta >= 1) {
                 double start = System.nanoTime();
-                update(physicsDelta/PPS);
-                physicsAverage.addValue((System.nanoTime() - start)/1000000);
+                update(physicsDelta / PPS);
+                physicsAverage.addValue((System.nanoTime() - start) / 1000000);
                 physicsDelta = 0;
             }
 
             if (drawDelta >= 1) {
                 double start = System.nanoTime();
                 draw(screen);
-                drawAverage.addValue((System.nanoTime() - start)/1000000);
+                drawAverage.addValue((System.nanoTime() - start) / 1000000);
                 repaint();
-                drawDelta=0;
+                drawDelta = 0;
             }
         }
     }
@@ -143,8 +148,8 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.WHITE);
-        g.fillRect(0,0,WIDTH, HEIGHT);
-        g.drawImage(buffer,0,0,null);
+        g.fillRect(0, 0, WIDTH, HEIGHT);
+        g.drawImage(buffer, 0, 0, null);
     }
 
     public static boolean keyDown(String key) {
@@ -154,10 +159,13 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
         return keys.contains(key);
     }
 
-    public Image getImage(String filePath) {
-        return javax.swing.ImageIcon.class.getResource(filePath) != null
-            ? new javax.swing.ImageIcon(getClass().getResource(filePath)).getImage()
-            : new javax.swing.ImageIcon(filePath).getImage();
+    public static Image getImage(String filePath) {
+        try {
+            return ImageIO.read(new File("path/to/your/image.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // Exit if image loading fails
+        }
     }
 
     public static boolean keyPressed(String key) {
@@ -181,14 +189,14 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
 
     @Override
     public void keyTyped(KeyEvent e) {
-       
+
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
 
         String keyChar = e.getKeyChar() + "";
-        
+
         if (e.getKeyCode() == 38) {
             keyChar = "up";
         }
@@ -206,13 +214,13 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
             keyEvents.add(keyChar + "");
         }
         keys.add(keyChar + "");
-        
+
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         String key = e.getKeyChar() + "";
-        
+
         if (e.getKeyCode() == 38) {
             key = "up";
         }
@@ -234,10 +242,12 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
         }
     }
 
-    public void onMouseClick(MouseEvent e) {}
+    public void onMouseClick(MouseEvent e) {
+    }
 
     @Override
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+    }
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -245,16 +255,20 @@ public class GBSGame extends JPanel implements Runnable, KeyListener, MouseListe
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {
+    }
 
     @Override
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
     @Override
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
     @Override
-    public void mouseDragged(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) {
